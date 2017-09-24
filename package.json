@@ -1,0 +1,16 @@
+{
+  "name": "expand-pattern",
+  "version": "1.0.0",
+  "description": "generate a list of strings from a simplified pattern syntax",
+  "main": "index.mjs",
+  "scripts": {
+    "test": "karma"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jasmine-core": "^2.8.0",
+    "karma": "^1.7.1",
+    "karma-jasmine": "^1.1.0"
+  }
+}
