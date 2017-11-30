@@ -10,11 +10,9 @@ function CommaToken(){}
 function SetObject(...args) {
   this.setThings = args;
   this.calc = function calc() {
-    console.log('SET OBJECT', this.setThings);
-
     return this.setThings.reduce(function(leftSide,val){
       let rightSide = val;
-      if(rightSide instanceof SetObject || rightSide instanceof RangeObject || rightSide instanceof NumericRangeObject) {
+      if (rightSide instanceof SetObject || rightSide instanceof RangeObject || rightSide instanceof NumericRangeObject) {
         rightSide = rightSide.calc();
       } else {
         rightSide = [rightSide];
@@ -26,17 +24,16 @@ function SetObject(...args) {
 function ExpandPatternObject(...args) {
   this.setThings = args;
   this.calc = function calc() {
-    console.log('EP OBJECT');
     let startArray = [];
-    if(this.setThings[0] instanceof RangeObject || this.setThings[0] instanceof NumericRangeObject || this.setThings[0] instanceof SetObject) {
+    if (this.setThings[0] instanceof RangeObject || this.setThings[0] instanceof NumericRangeObject || this.setThings[0] instanceof SetObject) {
       startArray.concat(this.setThings[0].calc());
-    }else {
+    } else {
       startArray.push(this.setThings[0]);
     }
 
     return this.setThings.slice(1).reduce(function(leftSide,val){
       let rightSide = val;
-      if(rightSide instanceof SetObject || rightSide instanceof RangeObject || rightSide instanceof NumericRangeObject) {
+      if (rightSide instanceof SetObject || rightSide instanceof RangeObject || rightSide instanceof NumericRangeObject) {
         rightSide = rightSide.calc();
       } else {
         rightSide = [rightSide];
@@ -71,30 +68,32 @@ function RangeObject({startString, endString, step = 1, characterSet=null}){
   if(this.set.indexOf(step) < 0) {
     //step is numeric or invalid
     if (typeof step == 'number') {
-      this.step = (this.start < this.end) ? Math.abs(step) : -Math.abs(step);
+      // this.step = (this.start < this.end) ? Math.abs(step) : -Math.abs(step);
+      this.step = Math.abs(step);
     } else {
       //maybe try parsing as number?
-      console.log(typeof step, step);
       throw 'error in numeric type';
     }
   } else {
-    this.step = (this.start < this.end) ? Math.abs(this.set.indexOf(step) - this.start) : -Math.abs(this.set.indexOf(step) - this.start);
+    // this.step = (this.start < this.end) ? Math.abs(this.set.indexOf(step) - this.start) : -Math.abs(this.set.indexOf(step) - this.start);
+    this.step = Math.abs(this.set.indexOf(step) - this.start);
   }
 
 
   this.calc = function(){
-    console.log('RANGE OBJECT');
     let val = this.start;
-    let fin = this.end;
+    // let fin = this.end;
+    let fin = Math.abs(this.end - this.start);
     let stp = this.step;
     let set = this.set;
+    let dir = (this.end < this.start)? -1 : 1;
     let iter = (function*() {
-      let running = val;
-      while(running != fin && running < set.length && running >= 0) {
-        yield set[running];
+      let running = 0;
+      while(running <= fin && val+running < set.length && val+(running*dir) >= 0) {
+        yield set[val + (running*dir)];
         running += stp;
       }
-      yield set[running];
+      // yield set[running];
     })();
     return [...iter];
   }
@@ -123,25 +122,25 @@ function NumericRangeObject({startString, endString, step = '1', base = 10}){
     }
   }
   this.calc = function calc(){
-    console.log('NUMERIC RANGE OBJECT');
     let padLength = Math.max(this.start.length, this.end.length);
     let val = Number.parseInt(this.start, this.base);
-    let fin = Number.parseInt(this.end, this.base);
-    let stp = (fin < val ? -1 : 1) * Number.parseInt(this.step, this.base);
+    let fin = Math.abs(val - Number.parseInt(this.end, this.base));
+    let bas = this.base;
+    let stp = this.step;
+    let dir = (this.end < this.start)? -1 : 1;
     let iter = (function*() {
-      let running = val;
-      while(running != fin) {
-        yield running;
+      let running = 0;
+      while(running <= fin && running >= 0) {
+        yield (val + (running*dir)).toString(bas);
         running += stp;
       }
-      yield running;
     })();
     return [...iter];
   }
   this.start = startString;
   this.end = endString;
-  this.step = step;
   this.base = base;
+  this.step = Math.abs(Number.parseInt(step, this.base));
 }
 function Context(tokens){
   this[Symbol.iterator] = function(){return this;};
@@ -191,7 +190,6 @@ function tokenize(pattern) {
   if(runningString.length > 0) {
     tokenList.push(new StringToken(runningString));
   }
-  console.log(tokenList);
   return tokenList;
   //TODO preferrably the array should contain correctly typed tokens, meaning we'll likely have to make all the relevant types
   //return [new StringToken('str'), new StartToken(), new StringToken('1'), new ColonToken(':'), new StringToken('3'), new CommaToken(','), new StringToken('4'), new EndToken('}'), new StringToken('ing')];
@@ -208,7 +206,6 @@ function parse(context){
       processArray.push(parseRange(context));
     }
   }
-  console.log(JSON.stringify(processArray));
   return new ExpandPatternObject(...processArray);
 };
 
@@ -284,7 +281,6 @@ function parseRange(context) {
 }
 
 function calc(parseTree) {
-  console.log(parseTree);
   if(!parseTree instanceof SetObject && !parseTree instanceof RangeObject && !parseTree instanceof NumericRangeObject) {
     throw 'error';
   }
@@ -292,12 +288,10 @@ function calc(parseTree) {
 }
 
 export function expandPattern(pattern) {
-  console.log('START PATTERN',pattern);
     if(pattern.length > 0 && pattern.indexOf('{') > -1) {
       try {
         return calc(parse(new Context(tokenize(pattern))));
       } catch (e) {
-        console.log('ERROR in', pattern);
         throw e;
       }
     } else {

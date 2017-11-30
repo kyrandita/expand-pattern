@@ -5,5 +5,6 @@ describe('expandPattern', function() {
 		expect(expandPattern('str{1:3,4}ing')).toEqual(['str1ing', 'str2ing', 'str3ing']);
 		expect(expandPattern('str{1,{a:b},3}ing')).toEqual(['str1ing', 'straing', 'strbing', 'str3ing']);
 		expect(expandPattern('str{e:g:b}ing')).toEqual(['streing', 'strcing']);
+		expect(expandPattern('str{1:2:6}ing')).toEqual(['str1ing', 'str3ing', 'str5ing']);
 	});
 });
