@@ -26,7 +26,7 @@ function ExpandPatternObject(...args) {
   this.calc = function calc() {
     let startArray = [];
     if (this.setThings[0] instanceof RangeObject || this.setThings[0] instanceof NumericRangeObject || this.setThings[0] instanceof SetObject) {
-      startArray.concat(this.setThings[0].calc());
+      startArray.push(...this.setThings[0].calc());
     } else {
       startArray.push(this.setThings[0]);
     }
@@ -48,7 +48,10 @@ function ExpandPatternObject(...args) {
     },startArray);
   }
 }
-let SETS = [new Set(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's','t','u','v','w','x','y','z'])];
+let SETS = [
+  new Set(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's','t','u','v','w','x','y','z']),
+  new Set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S','T','U','V','W','X','Y','Z'])
+];
 function RangeObject({startString, endString, step = 1, characterSet=null}){
   if(characterSet === null) {
     for (let set of SETS) {
@@ -67,11 +70,10 @@ function RangeObject({startString, endString, step = 1, characterSet=null}){
   this.end = this.set.indexOf(endString);
   if(this.set.indexOf(step) < 0) {
     //step is numeric or invalid
-    if (typeof step == 'number') {
+    if (typeof step == 'number' || !isNaN(step)) {
       // this.step = (this.start < this.end) ? Math.abs(step) : -Math.abs(step);
       this.step = Math.abs(step);
     } else {
-      //maybe try parsing as number?
       throw 'error in numeric type';
     }
   } else {
@@ -281,7 +283,7 @@ function parseRange(context) {
 }
 
 function calc(parseTree) {
-  if(!parseTree instanceof SetObject && !parseTree instanceof RangeObject && !parseTree instanceof NumericRangeObject) {
+  if(!(parseTree instanceof SetObject) && !(parseTree instanceof RangeObject) && !(parseTree instanceof NumericRangeObject) && !(parseTree instanceof ExpandPatternObject)) {
     throw 'error';
   }
   return parseTree.calc();
